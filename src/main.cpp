@@ -9,7 +9,7 @@
  * When this callback is fired, it will toggle line 2 of the LCD text between
  * "I was pressed!" and nothing.
  */
- // motor setups
+ // motor setup
 pros::MotorGroup left_motors({-8, 10, -2}); // left motors on ports 1, 2, 3
 pros::MotorGroup right_motors({19, -13, 16}); // right motors on ports 4, 5, 6
 pros::Motor double_intake(6);
