@@ -202,8 +202,32 @@ void autonomous() {
 	// chassis.setPose(0,0,0);
 	// chassis.moveToPoint(0,48,7000);
 	// return;  
-	chassis.setPose(15,-49.5,90); // starting pose
 
+	chassis.setPose(15,-48,90); // starting pose
+    chassis.moveToPoint(47,-48, 3000);
+    chassis.turnToHeading(180,1000);
+    loader.set_value(true);
+    pros::delay(500);
+    chassis.moveToPoint(chassis.getPose().x,-69,3000, {.maxSpeed = 60});   
+    bucket_intake();
+    pros::delay(2000);
+    stopbucket_intake();
+    loader.set_value(false);
+    chassis.moveToPoint(48,-48,3000);
+
+    chassis.turnToPoint(48,-24,3000);
+    chassis.moveToPoint(48,-36,3000, {.maxSpeed = 60});
+    high_intake();
+    pros::delay(2000);
+    stopbucket_intake();
+    return;
+    // chassis.turnToHeading(180,1000);
+    // loader.set_value(true);
+    // chassis.moveToPoint(chassis.getPose().x,-70,1000, {.maxSpeed = 45});
+    // return;
+    // loader.set_value(true);
+    // chassis.moveToPoint(chassis.getPose().x,-70,1000, {.maxSpeed = 60});
+    // return;
     ////middle goal
     // chassis.moveToPoint(34,48,3000);
     // chassis.turnToPoint(24,24,3000);
@@ -239,11 +263,11 @@ void autonomous() {
     // pros::delay(1500);
     // low_intake();
 
-	chassis.moveToPoint(50,-48, 3000);
+	chassis.moveToPoint(50.46,-48, 3000);
 	pros::delay(500);
 	loader.set_value(true);
     chassis.turnToHeading(180,1000);
-	chassis.moveToPoint(chassis.getPose().x,-70,1000, {.maxSpeed = 100});
+	chassis.moveToPoint(chassis.getPose().x,-70,1000, {.maxSpeed = 60});
 	pros::delay(500);
 	current = INTAKE;
 	bucket_intake();
