@@ -208,14 +208,19 @@ void autonomous() {
     chassis.turnToHeading(180,1000);
     loader.set_value(true);
     pros::delay(500);
-    chassis.moveToPoint(chassis.getPose().x,-69,3000, {.maxSpeed = 60});   
+    chassis.moveToPoint(chassis.getPose().x,-69,3000, {.maxSpeed = 70});   
     bucket_intake();
-    pros::delay(2000);
+    pros::delay(2250);
     stopbucket_intake();
+    // loader.set_value(false);
+    chassis.moveToPoint(chassis.getPose().x,-48,3000, {.forwards =false});
     loader.set_value(false);
-    chassis.moveToPoint(48,-48,3000);
-
+    chassis.turnToPoint(chassis.getPose().x, -24,3000);
+    chassis.moveToPoint(50.5,-32,3000, {.maxSpeed = 100}, false);
+    high_intake();
+    return;
     chassis.turnToPoint(48,-24,3000);
+    loader.set_value(false);
     chassis.moveToPoint(48,-36,3000, {.maxSpeed = 60});
     high_intake();
     pros::delay(2000);
