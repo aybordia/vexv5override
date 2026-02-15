@@ -2,6 +2,7 @@
 #include "lemlib/api.hpp" // IWYU pragma: keep
 #include "pros/misc.h"
 #include "pros/rtos.h"
+#include <cstdio>
 
 /**
  * A callback functioxn for LLEMU's center button.
@@ -12,20 +13,21 @@
  // motor setup
 pros::MotorGroup left_motors({-8, 10, -2}); // left motors on ports 1, 2, 3
 pros::MotorGroup right_motors({19, -13, 16}); // right motors on ports 4, 5, 6
-pros::Motor double_intake(6);
+pros::Motor double_intake(-6);
 pros::Motor top_gintake(4);
 pros::Motor top_fintake(11);
 pros::Motor bottom_gintake(17);
+
 void bucket_intake() {
     double_intake.move(127);
     top_gintake.move(127);
-    top_fintake.move(127);
+    top_fintake.move(127);  
 
 }
 void high_intake() {
     double_intake.move(127);
     top_gintake.move(127);
-    top_fintake.move(-227);
+    top_fintake.move(-127);
 	bottom_gintake.move(-127);
 
 }
@@ -65,9 +67,10 @@ pros::adi::Pneumatics descore('g', false);
 pros::Rotation vertical_sensor(10);
 // replace 1 with the port the rotation sensor is connected to
 pros::Rotation horizontal_sensor(14);
+pros::Distance distance_sensor(20);
 lemlib::TrackingWheel vertical_tracking_wheel(&vertical_sensor, lemlib::Omniwheel::NEW_275, -2.5);
 lemlib::TrackingWheel horizontal_tracking_wheel(&horizontal_sensor, lemlib::Omniwheel::NEW_275, -2.5);
-
+pros::Distance distance(18);
 
 
 lemlib::OdomSensors sensors(
@@ -97,7 +100,7 @@ lemlib::ControllerSettings angular_controller(
     0,
     52, // kD
     3,
-    0.75,
+    1,
     200,
     2.0,
     600,
@@ -175,16 +178,17 @@ enum intake_state {
 
 intake_state current = STOP;
 void middle_goaal() {
-    chassis.setPose(15, 49.5, 3000);
-    chassis.moveToPoint(33,48,3000);
-    chassis.turnToPoint(22,22,3000);
+    //middle goal
+    chassis.moveToPoint(34,48,3000);
+    chassis.turnToPoint(24,24,3000);
     bucket_intake();
-    chassis.moveToPoint(26, 24, 3000, {.maxSpeed = 30});    
-    chassis.moveToPoint(12, 12,3000, {.maxSpeed = 80});
-    chassis.moveToPoint(13,13, 3000);
+    chassis.moveToPoint(24, 24,3000, {.maxSpeed = 80});
+    chassis.moveToPoint(23, 19,3000, {.maxSpeed = 80});
+    chassis.turnToPoint(0,0,3000);
     stopbucket_intake();
-    pros::delay(1500);
+    pros::delay(500);
     middle_intake();
+    return;
 }
 // void skills_goal() {
 //     chassis.setPose(15, -49.5, 90); 
@@ -202,30 +206,63 @@ void autonomous() {
 	// chassis.setPose(0,0,0);
 	// chassis.moveToPoint(0,48,7000);
 	// return;  
+    // bro u suck i got my own stuff to do go help urself
+    // chassis.setPose(-15, -48, -90); // starting pose
+    // chassis.moveToPoint(-47, -48, 3000);
+    // chassis.turnToHeading(180, 1000);
+    // loader.set_value(true);
+    // pros::delay(500);
 
-	chassis.setPose(15,-48,90); // starting pose
-    chassis.moveToPoint(47,-48, 3000);
-    chassis.turnToHeading(180,1000);
-    loader.set_value(true);
-    pros::delay(500);
-    chassis.moveToPoint(chassis.getPose().x,-69,3000, {.maxSpeed = 70});   
-    bucket_intake();
-    pros::delay(2250);
-    stopbucket_intake();
+    // chassis.moveToPoint(chassis.getPose().x, -69, 3000, {.maxSpeed = 70});   
+    // bucket_intake();
+    // pros::delay(2300);
+    // stopbucket_intake();
+
+    // // loader.set_value(false);
+    // chassis.moveToPoint(chassis.getPose().x, -48, 3000, {.forwards = false}, false);
     // loader.set_value(false);
-    chassis.moveToPoint(chassis.getPose().x,-48,3000, {.forwards =false});
-    loader.set_value(false);
-    chassis.turnToPoint(chassis.getPose().x, -24,3000);
-    chassis.moveToPoint(50.5,-32,3000, {.maxSpeed = 100}, false);
-    high_intake();
-    return;
-    chassis.turnToPoint(48,-24,3000);
-    loader.set_value(false);
-    chassis.moveToPoint(48,-36,3000, {.maxSpeed = 60});
-    high_intake();
-    pros::delay(2000);
+
+    // chassis.turnToPoint(chassis.getPose().x, -24, 3000);
+    // chassis.moveToPoint(-49.25, -30, 3000, {.maxSpeed = 100}, false);
+
+    // high_intake();
+    // pros::delay(2000);
+
+    // chassis.moveToPoint(chassis.getPose().x, -48, 3000, {.forwards = false});
+    // chassis.turnToPoint(-24, -24, 3000);
+
+    // return;
+    //end of this side thats not working alliance thing
+	chassis.setPose(15,-48,90); // starting pose
+    chassis.moveToPoint(46.6,-48, 2000);
+    chassis.turnToHeading(180,3000,{}, false);
+    chassis.setPose(70.5 - (distance_sensor.get()/25.4 +4), chassis.getPose().y,180 );
+    loader.set_value(true);
+    pros::delay(125);
+    chassis.moveToPoint(chassis.getPose().x,-70,3000, {.maxSpeed = 70});   
+    bucket_intake();
+    pros::delay(1500);
+    chassis.moveToPoint(chassis.getPose().x,-48,1000, {.forwards =false}, false);
+
     stopbucket_intake();
+    chassis.moveToPoint(chassis.getPose().x,-41,1000, {.forwards =false}, false);
+    loader.set_value(false);
+    chassis.turnToPoint(chassis.getPose().x, -24,3000,{}, false);
+    // pros::delay(150);
+    chassis.setPose(70.5-(distance.get()/25.4 + 4), chassis.getPose().y, chassis.getPose().theta);
+    chassis.moveToPoint(48.7,-30 ,3000, {.maxSpeed = 100}, false);
+    high_intake();
+    pros::delay(1500);
+    stopbucket_intake();
+    chassis.moveToPoint(chassis.getPose().x, -48, 1000, {.forwards = false});
+    chassis.turnToPoint(24,-24,3000);
+    bucket_intake();
+    chassis.moveToPoint(20,-20, 1000);
+    chassis.moveToPoint(24,-24, 1000, {.maxSpeed = 50});
+    // chassis.moveToPoint(24, -24, 3000);
     return;
+    // end of the side thats working
+
     // chassis.turnToHeading(180,1000);
     // loader.set_value(true);
     // chassis.moveToPoint(chassis.getPose().x,-70,1000, {.maxSpeed = 45});
@@ -233,17 +270,7 @@ void autonomous() {
     // loader.set_value(true);
     // chassis.moveToPoint(chassis.getPose().x,-70,1000, {.maxSpeed = 60});
     // return;
-    ////middle goal
-    // chassis.moveToPoint(34,48,3000);
-    // chassis.turnToPoint(24,24,3000);
-    // bucket_intake();
-    // chassis.moveToPoint(24, 24,3000, {.maxSpeed = 80});
-    // chassis.moveToPoint(23, 19,3000, {.maxSpeed = 80});
-    // chassis.turnToPoint(0,0,3000);
-    // stopbucket_intake();
-    // pros::delay(500);
-    // middle_intake();
-    // return;
+
     // pros::delay(1500);
     // chassis.turnToPoint(48,chassis.getPose().y,3000);
     // chassis.moveToPoint(59,chassis.getPose().y,3000);
@@ -267,33 +294,45 @@ void autonomous() {
     // stopbucket_intake();
     // pros::delay(1500);
     // low_intake();
+    // // middle goal thing
+    // chassis.setPose(-15, -48, -90);
+    // chassis.moveToPoint(-34,-48,3000);
+    // chassis.turnToPoint(-24,-24,3000);
+    // bucket_intake();
+    // chassis.moveToPoint(-24, -24,3000, {.maxSpeed = 80});
+    // chassis.moveToPoint(-23, -19,3000, {.maxSpeed = 80});
+    // chassis.turnToPoint(-5,0,3000);
+    // stopbucket_intake();
+    // pros::delay(500);
+    // middle_intake();
+    // return;
 
-	chassis.moveToPoint(50.46,-48, 3000);
-	pros::delay(500);
-	loader.set_value(true);
-    chassis.turnToHeading(180,1000);
-	chassis.moveToPoint(chassis.getPose().x,-70,1000, {.maxSpeed = 60});
-	pros::delay(500);
-	current = INTAKE;
-	bucket_intake();
-	pros::delay(2500);
-	stopbucket_intake();
-    chassis.moveToPoint(48,-48,3000);
-    pros::delay(500);
-    chassis.turnToPoint(48,-36,3000);
-    chassis.moveToPoint(42,-43,3000);
-    chassis.turnToPoint(48,-48,3000);
-    high_intake();
-    pros::delay(2000);
-    chassis.moveToPoint(chassis.getPose().x, -72, 3000);
-    pros::delay(1500);
-    chassis.turnToPoint(24,-24, 3000);
-    chassis.moveToPoint(24,-24,3000);
-    bucket_intake();
-    pros::delay(500);
-    stopbucket_intake();
-    chassis.moveToPoint(8,-8,3000);
-    low_intake();
+	// chassis.moveToPoint(50.46,-48, 3000);
+	// pros::delay(500);
+	// loader.set_value(true);
+    // chassis.turnToHeading(180,1000);
+	// chassis.moveToPoint(chassis.getPose().x,-70,1000, {.maxSpeed = 60}); 
+	// pros::delay(500);
+	// current = INTAKE;
+	// bucket_intake();
+	// pros::delay(2500);
+	// stopbucket_intake();
+    // chassis.moveToPoint(48,-48,3000);
+    // pros::delay(500);
+    // chassis.turnToPoint(48,-36,3000);
+    // chassis.moveToPoint(42,-43,3000);
+    // chassis.turnToPoint(48,-48,3000);
+    // high_intake();
+    // pros::delay(2000);
+    // chassis.moveToPoint(chassis.getPose().x, -72, 3000);
+    // pros::delay(1500);
+    // chassis.turnToPoint(24,-24, 3000);
+    // chassis.moveToPoint(24,-24,3000);
+    // bucket_intake();
+    // pros::delay(500);
+    // stopbucket_intake();
+    // chassis.moveToPoint(8,-8,3000);
+    // low_intake();
 	// chassis.turnToPoint(24, -24, 3000);
 	// chassis.moveToPoint(24,-24, 30000);
 	//			
@@ -353,7 +392,7 @@ void opcontrol() {
 
         // move the robot
         chassis.arcade(leftY  , leftX);
-
+        
         if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)){
             if  (current == STOP){
                 current = INTAKE;
@@ -404,6 +443,18 @@ void opcontrol() {
         if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X)) {
             descore.toggle();
         }
+        if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_Y)) {
+            if  (current == STOP){
+                current = INTAKE;
+                top_gintake.move(127);
+                top_fintake.move(127);
+            }
+            else if (current == INTAKE){
+                current = STOP;
+                stopbucket_intake();
+            }
+        }
+         
         // delay to save resources
         pros::delay(25);
         // if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
