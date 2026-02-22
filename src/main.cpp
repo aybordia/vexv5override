@@ -177,21 +177,8 @@ enum intake_state {
 };
 
 intake_state current = STOP;
-void middle_goaal() {
-    //middle goal
-    chassis.moveToPoint(34,48,3000);
-    chassis.turnToPoint(24,24,3000);
-    bucket_intake();
-    chassis.moveToPoint(24, 24,3000, {.maxSpeed = 80});
-    chassis.moveToPoint(23, 19,3000, {.maxSpeed = 80});
-    chassis.turnToPoint(0,0,3000);
-    stopbucket_intake();
-    pros::delay(500);
-    middle_intake();
-    return;
-}
-// void skills_goal() {
-//     chassis.setPose(15, -49.5, 90); 
+// void middle_goaal() {
+//     //middle goal
 //     chassis.moveToPoint(34,48,3000);
 //     chassis.turnToPoint(24,24,3000);
 //     bucket_intake();
@@ -201,8 +188,53 @@ void middle_goaal() {
 //     stopbucket_intake();
 //     pros::delay(500);
 //     middle_intake();
+//     return;
+// }
+//  void skills_goal() {
+// 	chassis.setPose(15,-48,90); // starting pose
+//     chassis.moveToPoint(46.6,-48, 2000);
+//     chassis.turnToHeading(180,3000,{}, false);
+//     chassis.setPose(70.5 - (distance_sensor.get()/25.4 +4), chassis.getPose().y,180 );
+//     loader.set_value(true);
+//     pros::delay(125);
+//     chassis.moveToPoint(chassis.getPose().x,-69,1000, {.maxSpeed = 70});
+//     bucket_intake();
+//     pros::delay(2300);
+//     chassis.moveToPoint(chassis.getPose().x,-48,1000, {.forwards =false}, false);
+//     stopbucket_intake();
+//     chassis.moveToPoint(chassis.getPose().x,-41,1000, {.forwards =false}, false);
+//     pros::delay(250);
+//     loader.set_value(false);
+//     bucket_intake();
+//     chassis.turnToPoint(24,-24,1800);
+//     chassis.moveToPoint(28,-28,1000);
+//     chassis.turnToHeading(0, 2000, {}, false);
+ 
+//     chassis.moveToPoint(chassis.getPose().x, 31, 3000, {}, false);
+//     chassis.turnToHeading(90,3000, {}, false);
+//     chassis.moveToPoint(41, chassis.getPose().y, 3000, {}, false);
+//     chassis.turnToHeading(180, 1000, {}, false);
+//     chassis.setPose(70.5 - (distance_sensor.get()/25.4 +4), chassis.getPose().y,180 , false);
+//     chassis.moveToPoint(chassis.getPose().x, 24, 1000);
+//     stopbucket_intake();
+//     high_intake();
+//     pros::delay(5000);
+//     stopbucket_intake();
+//     chassis.moveToPoint(chassis.getPose().x ,58, 1000 , {.forwards = false}, false);
+//     chassis.turnToHeading(0,2000, {}, false);
+//     loader.set_value(true);
+//     pros::delay(500);
+//     chassis.setPose(70.5 - (distance.get()/25.4 +4), chassis.getPose().y,180 , false);
+//     bucket_intake();
+//     chassis.moveToPoint(chassis.getPose().x, 70, 3000);
+//     chassis.moveToPoint(chassis.getPose().x, 65, 1000, {.forwards = false}, false);
+//     loader.set_value(false);
 // }  
 void autonomous() {
+    chassis.setPose(15,-48,90); 
+    chassis.moveToPoint(20.5, chassis.getPose().y, 300);
+    //slkills
+    // skills_goal();
 	// chassis.setPose(0,0,0);
 	// chassis.moveToPoint(0,48,7000);
 	// return;  
@@ -233,35 +265,37 @@ void autonomous() {
 
     // return;
     //end of this side thats not working alliance thing
-	chassis.setPose(15,-48,90); // starting pose
-    chassis.moveToPoint(46.6,-48, 2000);
-    chassis.turnToHeading(180,3000,{}, false);
-    chassis.setPose(70.5 - (distance_sensor.get()/25.4 +4), chassis.getPose().y,180 );
-    loader.set_value(true);
-    pros::delay(125);
-    chassis.moveToPoint(chassis.getPose().x,-70,3000, {.maxSpeed = 70});   
-    bucket_intake();
-    pros::delay(1500);
-    chassis.moveToPoint(chassis.getPose().x,-48,1000, {.forwards =false}, false);
-
-    stopbucket_intake();
-    chassis.moveToPoint(chassis.getPose().x,-41,1000, {.forwards =false}, false);
-    loader.set_value(false);
-    chassis.turnToPoint(chassis.getPose().x, -24,3000,{}, false);
+	// chassis.setPose(15,-48,90); // starting pose
+    // chassis.moveToPoint(46.6,-48, 1500, {}, false);
+    // chassis.turnToHeading(180,3000,{.minSpeed = 8, .earlyExitRange = 0.2}, false);
+    // chassis.setPose(70.5 - (distance_sensor.get()/25.4 +4.5), chassis.getPose().y,180 );
+    // loader.set_value(true); 
+    // pros::delay(125);
+    // chassis.moveToPoint(chassis.getPose().x,-70,1000, {.maxSpeed = 60});   
+    // bucket_intake();
+    // pros::delay(1500);
+    // chassis.moveToPoint(chassis.getPose().x,-48,1000, {.forwards =false}, false);
+    // stopbucket_intake();
+    // chassis.moveToPoint(chassis.getPose().x,-41,1000, {.forwards =false}, false);
+    // loader.set_value(false);
+    // chassis.turnToPoint(chassis.getPose().x, -20,2000,{}, false);
     // pros::delay(150);
-    chassis.setPose(70.5-(distance.get()/25.4 + 4), chassis.getPose().y, chassis.getPose().theta);
-    chassis.moveToPoint(48.7,-30 ,3000, {.maxSpeed = 100}, false);
-    high_intake();
-    pros::delay(1500);
-    stopbucket_intake();
-    chassis.moveToPoint(chassis.getPose().x, -48, 1000, {.forwards = false});
-    chassis.turnToPoint(24,-24,3000);
-    bucket_intake();
-    chassis.moveToPoint(20,-20, 1000);
-    chassis.moveToPoint(24,-24, 1000, {.maxSpeed = 50});
-    // chassis.moveToPoint(24, -24, 3000);
-    return;
-    // end of the side thats working
+    // chassis.setPose((70.5-(distance.get()/25.4 + 4)*cos(lemlib::degToRad(chassis.getPose().theta))), chassis.getPose().y, chassis.getPose().theta);
+    // chassis.moveToPoint(47,-17 ,3000, {.maxSpeed =   100}, false);
+    // high_intake();
+    // pros::delay(1500);
+    // stopbucket_intake();
+    // chassis.moveToPoint(chassis.getPose().x, -50, 1000, {.forwards = false}, false);
+    // pros::delay(500);
+    // chassis.turnToPoint(24,-24,1000);
+    // bucket_intake();
+    // chassis.moveToPoint(20,-20, 500);
+    // chassis.moveToPoint(24,-24, 500, {.maxSpeed = 20});
+    // chassis.moveToPoint(12,-12,500);
+    // low_intake();
+
+    // return;
+    //end of the side thats working
 
     // chassis.turnToHeading(180,1000);
     // loader.set_value(true);
@@ -385,7 +419,18 @@ pros::Controller controller(pros::E_CONTROLLER_MASTER);
 
 void opcontrol() {
     // loop forever
+    
+    // pros::AIVision aivision(2);
+    // aivision.reset();
+    // aivision.enable_detection_types(pros::AivisionModeType::objects);
     while (true) {
+        // auto objects = aivision.get_all_objects();
+        // for (auto &object : objects) {
+        //     if (pros::AIVision::is_type(object, pros::AivisionDetectType::object)) {
+        //         printf("object\n");
+        //         printf("id %d\n", object.id);
+        //         printf("%d %d %d %d %d\n", object.object.element.xoffset, object.object.element.yoffset, object.object.element.width, object.object.element.height, object.object.element.score);
+        //     }
         // get left y and right x positions
         int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
         int leftX = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X);
@@ -454,7 +499,17 @@ void opcontrol() {
                 stopbucket_intake();
             }
         }
-         
+        if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B)) {
+            if (current == STOP) {
+                current = INTAKE;
+                bottom_gintake.move(127);
+            }
+            else if (current == INTAKE) {
+                current = STOP;
+                stopbucket_intake();
+            }
+            }
+        }
         // delay to save resources
         pros::delay(25);
         // if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
@@ -466,5 +521,5 @@ void opcontrol() {
         // }
 
     }
-}
+
 //16.5,55
