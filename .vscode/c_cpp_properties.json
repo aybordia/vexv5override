@@ -6,14 +6,15 @@
         "${workspaceFolder}/**",
         "/Users/ayan/Desktop/Projects/USACO codeforces aca/.vscode/vexv5-bordiapush/vexv5push/include",
         "/Users/ayan/Downloads/vexv5push/include",
-        "/Users/ayan/Desktop/vexv5push/include"
+        "/Users/ayan/Desktop/vexv5push/include",
+        "/Users/amelia/Documents/GitHub/vexv5pushkinetic/include"
       ],
       "defines": [
         "_DEBUG",
         "UNICODE",
         "_UNICODE"
       ],
-      "compilerPath": "/Users/ayan/Library/Application Support/Code/User/globalStorage/sigbots.pros/install/pros-toolchain-macos/bin/arm-none-eabi-g++",
+      "compilerPath": "/Users/amelia/Library/Application Support/Code/User/globalStorage/sigbots.pros/install/pros-toolchain-macos/bin/arm-none-eabi-g++",
       "cStandard": "gnu11",
       "cppStandard": "gnu++20",
       "intelliSenseMode": "gcc-arm",
@@ -22,7 +23,7 @@
       ],
       "browse": {
         "path": [
-          "/Users/ayan/Desktop/vexv5push"
+          "/Users/amelia/Documents/GitHub/vexv5pushkinetic"
         ],
         "limitSymbolsToIncludedHeaders": true,
         "databaseFilename": ""
