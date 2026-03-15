@@ -5,8 +5,8 @@
 #include <cmath>
 #include <cstdio>
 
-pros::MotorGroup left_motors({-8, 10, -2});
-pros::MotorGroup right_motors({19, -13, 16});
+pros::MotorGroup left_motors({-11, -16, -20});
+pros::MotorGroup right_motors({1, 6, 10});
 pros::Motor double_intake(-6);
 pros::Motor top_gintake(4);
 pros::Motor top_fintake(11);
@@ -20,7 +20,7 @@ void stopbucket_intake(){ double_intake.move(0); top_gintake.move(0); top_fintak
 
 lemlib::Drivetrain drivetrain(&left_motors, &right_motors, 12.5, lemlib::Omniwheel::OLD_325, 480, 2);
 
-pros::Imu imu(15);
+pros::Imu imu(5);
 pros::adi::Pneumatics loader('h', false);
 pros::adi::Pneumatics descore('g', false);
 
@@ -32,9 +32,8 @@ lemlib::TrackingWheel vertical_tracking_wheel(&vertical_sensor, lemlib::Omniwhee
 lemlib::TrackingWheel horizontal_tracking_wheel(&horizontal_sensor, lemlib::Omniwheel::NEW_275, -2.5);
 
 lemlib::OdomSensors sensors(nullptr, nullptr, &horizontal_tracking_wheel, nullptr, &imu);
-
-lemlib::ControllerSettings lateral_controller(7,0,37,3,0.5,250,2.0,600,10);
-lemlib::ControllerSettings angular_controller(6,0,52,3,1,200,2.0,600,0);
+lemlib::ControllerSettings lateral_controller(0.6,0,0.1,3,0.5,250,2.0,600,10);
+lemlib::ControllerSettings angular_controller(0.8,1,3,3,1,200,2.0,600,0);
 
 lemlib::Chassis chassis(drivetrain, lateral_controller, angular_controller, sensors);
 
@@ -108,8 +107,6 @@ double kalmanUpdate(KalmanState &state,double measurement,double R,double Q){
     return state.estimate;
 }
 
-// ---------------- BEZIER PATH ---------------- //
-
 struct Point { double x,y; };
 
 Point bezier(Point p0,Point p1,Point p2,Point p3,double t){
@@ -137,28 +134,12 @@ Point bezier(Point p0,Point p1,Point p2,Point p3,double t){
 }
 
 
-void autonomous(){
+#include "lemlib/api.hpp"
+ASSET(example_txt);
 
-    chassis.setPose(15,-48,90);
-
-    Point p0{15,-48};
-    Point p1{24,-30};
-    Point p2{36,-20};
-    Point p3{48,-12};
-
-    for(double t=0; t<=1.0; t+=0.05){
-
-        Point p = bezier(p0,p1,p2,p3,t);
-
-        chassis.moveToPoint(p.x,p.y,2000);
-
-        pros::delay(10);
-    }
-
-    loader.toggle();
-    pros::delay(400);
-
-    descore.toggle();
+void autonomous() {
+    chassis.setPose(15, -48, 90);
+    chassis.follow(example_txt, 15, 2000);
 }
 
 
@@ -200,27 +181,23 @@ void opcontrol(){
         last_heading = heading;
         last_time = now;
 
-        // pose exponential update
         pose = poseExponentialUpdate(pose,vx,vy,omega,dt);
 
-        // sensor measurements
         double measX = distance_sensor.get();
         double measY = pose.y;
         double measTheta = heading;
 
-        // kalman fusion
         pose.x = kalmanUpdate(kfX,measX,1.0,0.01);
         pose.y = kalmanUpdate(kfY,measY,1.0,0.01);
         pose.theta = kalmanUpdate(kfTheta,measTheta,0.5,0.01);
 
         chassis.setPose(pose.x,pose.y,pose.theta);
 
-        // ---------------- DRIVER CONTROL ---------------- //
 
         int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
-        int leftX = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_X);
+        int rightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
 
-        chassis.arcade(leftY,leftX);
+        chassis.arcade(leftY,rightX);
 
         if(controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)){
             if(current==STOP){ current=INTAKE; bucket_intake(); }
