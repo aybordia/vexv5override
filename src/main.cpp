@@ -4,7 +4,6 @@
 #include "pros/rtos.h"
 #include <cmath>
 #include <cstdio>
-
 pros::MotorGroup left_motors({-11, -16, -20});
 pros::MotorGroup right_motors({1, 6, 10});
 pros::Motor double_intake(-6);
@@ -136,6 +135,7 @@ Point bezier(Point p0,Point p1,Point p2,Point p3,double t){
 
 #include "lemlib/api.hpp"
 ASSET(example_txt);
+
 
 void autonomous() {
     chassis.setPose(15, -48, 90);
