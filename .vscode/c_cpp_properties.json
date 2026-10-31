@@ -7,7 +7,8 @@
         "/Users/ayan/Desktop/Projects/USACO codeforces aca/.vscode/vexv5-bordiapush/vexv5push/include",
         "/Users/ayan/Downloads/vexv5push/include",
         "/Users/ayan/Desktop/vexv5push/include",
-        "/Users/amelia/Documents/GitHub/vexv5pushkinetic/include"
+        "/Users/amelia/Documents/GitHub/vexv5pushkinetic/include",
+        "/Users/ayan/Downloads/vexv5override-main/include"
       ],
       "defines": [
         "_DEBUG",
@@ -23,7 +24,7 @@
       ],
       "browse": {
         "path": [
-          "/Users/ayan/Desktop/vexv5push"
+          "/Users/ayan/Downloads/vexv5override-main"
         ],
         "limitSymbolsToIncludedHeaders": true,
         "databaseFilename": ""
