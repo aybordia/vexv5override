@@ -18,11 +18,11 @@ pros::MotorGroup dr4b_motors{1,-2};
 pros::MotorGroup left_motors({8, -4}, pros::MotorGears::blue);   // reversed whole side to fix inverted drive
 
 // Right side of the drivetrain.
-pros::MotorGroup right_motors({2, -7}, pros::MotorGears::blue);  // reversed whole side to fix inverted drive
+pros::MotorGroup right_motors({-2, 7}, pros::MotorGears::blue);  // reversed whole side to fix inverted drive
 
 
 // Inertial sensor (IMU / gyro) on smart port 6. Used to track the robot's heading (rotation).
-pros::Imu imu(9 );
+pros::Imu imu(10 );
 
 // Keep lift motors on por  ts that do not conflict with the IMU smart port.
 pros::Motor lift_motor_left(-10, pros::MotorGears::red);
@@ -139,7 +139,7 @@ void auton_blue_left(){
 void autonomous() {
     // auton_red_right();   // Run the routine defined above
     chassis.setPose(0, 0, 0);                 // (all commented out — an alternate routine kept for reference)
-    chassis.moveToPoint(0, 24,3000);
+    chassis.moveToPoint(24,0,3000);
 //     chassis.turnToHeading(90,2000);
 //     pros::delay(1000);
 //     chassis.moveToPoint(20,36,3000);
@@ -156,7 +156,7 @@ void opcontrol() {
         // Read the right stick's horizontal axis (-127 to 127) → turning amount
         int rightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
 
-        chassis.arcade(rightX, leftY);   // Drive the robot with the sticks)
+        chassis.arcade(leftY, rightX);   // Drive the robot with the sticks)
 
         // Ratchet claw: A toggles continuous spin on/off, B opens while held
         if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)) {
