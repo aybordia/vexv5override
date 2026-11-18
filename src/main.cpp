@@ -12,24 +12,22 @@
 // ---- Hardware declarations: every physical device gets a software object bound to its port ----
 //R1 and L2 are raise and lower cascade
 //R2 and L1 are to raise and lower the 2 bar
-//A for claw expand and A to contract
+//A toggles the ratchet claw spin on/off; B opens it
 //Y for flip the claw
-//
-// Left side of the drivetrain. Two motors on ports 10 and 18.
-// The MINUS signs REVERSE those motors, so "forward" voltage spins them the right way for that side.
-// Blue gearset = the high-speed 600 RPM cartridge.
-pros::MotorGroup left_motors({-10, -18}, pros::MotorGears::blue);
+pros::MotorGroup dr4b_motors{1,-2};
+pros::MotorGroup left_motors({8, -4}, pros::MotorGears::blue);   // reversed whole side to fix inverted drive
 
-// Right side of the drivetrain. Motors on ports 20 and 11, NOT reversed (positive port numbers).
-pros::MotorGroup right_motors({20, 11}, pros::MotorGears::blue);
+// Right side of the drivetrain.
+pros::MotorGroup right_motors({2, -7}, pros::MotorGears::blue);  // reversed whole side to fix inverted drive
 
 
-// Inertial sensor (IMU / gyro) on smart port 1. Used to track the robot's heading (rotation).
-pros::Imu imu(1);
+// Inertial sensor (IMU / gyro) on smart port 6. Used to track the robot's heading (rotation).
+pros::Imu imu(9 );
 
-// Keep lift motors on ports that do not conflict with the IMU smart port.
-pros::Motor lift_motor_left(-15, pros::MotorGears::blue);
-pros::Motor lift_motor_right(14, pros::MotorGears::blue);
+// Keep lift motors on por  ts that do not conflict with the IMU smart port.
+pros::Motor lift_motor_left(-10, pros::MotorGears::red);
+pros::Motor lift_motor_right(11, pros::MotorGears::red);
+pros::Motor ratchet_motor(5, pros::MotorGears::blue);
 
 // 2-bar lift: two motors. PLACEHOLDER PORTS (2 and 3) — change to the real ports.
 // Port 3 is negative (reversed) assuming the motors face each other; flip the sign if it fights the other one.
@@ -43,6 +41,7 @@ const double CLAW_CLOSED_DEG = 30;   // where the claw closes to. Bigger number 
 
   // how far the motor turns to open — tune this on the robot (watch the brain screen)
 bool claw_open = false;
+bool ratchet_spinning = false;   // toggle state for the ratchet claw (A flips it)
 
 // Claw flip: a piston on 3-wire port 'H'.
 pros::adi::Pneumatics claw_flip_piston('H', false);
@@ -139,12 +138,13 @@ void auton_blue_left(){
 // ---- autonomous(): the 15-second auton period; the field calls this automatically ----
 void autonomous() {
     // auton_red_right();   // Run the routine defined above
-//     chassis.setPose(0, 0, 0);                 // (all commented out — an alternate routine kept for reference)
-//     chassis.moveToPoint(0, 36,3000);
+    chassis.setPose(0, 0, 0);                 // (all commented out — an alternate routine kept for reference)
+    chassis.moveToPoint(0, 24,3000);
 //     chassis.turnToHeading(90,2000);
 //     pros::delay(1000);
 //     chassis.moveToPoint(20,36,3000);
     // auton_blue_left();
+
 }
 
 // ---- opcontrol(): the driver-control period; a loop that reads the controller forever ----
@@ -156,12 +156,24 @@ void opcontrol() {
         // Read the right stick's horizontal axis (-127 to 127) → turning amount
         int rightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
 
-        chassis.arcade(leftY, rightX);   // Drive the robot with the sticks
+        chassis.arcade(rightX, leftY);   // Drive the robot with the sticks)
 
-        // Cascade: hold R1 to raise, hold L2 to lower, let go and it stops
+        // Ratchet claw: A toggles continuous spin on/off, B opens while held
+        if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)) {
+            ratchet_spinning = !ratchet_spinning;   // each A press flips it
+        }
+        if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)) {
+            ratchet_motor.move(127);                // B held = open
+            ratchet_spinning = false;               // opening cancels the spin
+        } else if (ratchet_spinning) {
+            ratchet_motor.move(-127);               // toggled on = keep spinning
+        } else {
+            ratchet_motor.brake();                  // toggled off = stop
+        }
+
         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
-            lift_motor_left.move(127);
-            lift_motor_right.move(127);
+            lift_motor_left.move(90);
+            lift_motor_right.move(90);
         } else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
             lift_motor_left.move(-127);
             lift_motor_right.move(-127);
@@ -170,12 +182,14 @@ void opcontrol() {
             lift_motor_right.brake();
         }
 
+        
         // 2-bar: hold R2 to raise, hold L1 to lower, let go and it holds still
         // if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) two_bar.move(127);
         // else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) two_bar.move(-127);
         // else two_bar.brake();
 
         // A: press once to open the claw, press again to close it
+        // NOTE: A is ALSO toggling the ratchet above — move this to a free button.
         if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)) {
             claw_open = !claw_open;
             claw_motor.move_absolute(claw_open ? CLAW_OPEN_DEG : CLAW_CLOSED_DEG, 100);
