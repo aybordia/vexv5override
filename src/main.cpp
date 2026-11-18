@@ -15,10 +15,10 @@
 //A toggles the ratchet claw spin on/off; B opens it
 //Y for flip the claw
 pros::MotorGroup dr4b_motors{1,-2};
-pros::MotorGroup left_motors({8, -4}, pros::MotorGears::blue);   // reversed whole side to fix inverted drive
+pros::MotorGroup left_motors({2, -7}, pros::MotorGears::blue);   // physical LEFT side; positive = forward
 
 // Right side of the drivetrain.
-pros::MotorGroup right_motors({-2, 7}, pros::MotorGears::blue);  // reversed whole side to fix inverted drive
+pros::MotorGroup right_motors({-8, 4}, pros::MotorGears::blue);  // physical RIGHT side; positive = forward
 
 
 // Inertial sensor (IMU / gyro) on smart port 6. Used to track the robot's heading (rotation).
@@ -67,9 +67,9 @@ lemlib::OdomSensors sensors(&left_tracking,   // vertical tracking wheel 1 (left
 
 // ---- Lateral (forward/backward driving) PID controller settings ----
 // These numbers tune how the robot accelerates toward and settles at a target distance.
-lemlib::ControllerSettings lateral_controller(1,   // kP  — proportional gain (how hard it pushes toward target)
+lemlib::ControllerSettings lateral_controller(2.5,   // kP  — proportional gain (how hard it pushes toward target)
                                               0,     // kI  — integral gain (corrects long-term drift); 0 = off
-                                              1,     // kD  — derivative gain (dampens/slows approach to reduce overshoot)
+                                              7,     // kD  — derivative gain (dampens/slows approach to reduce overshoot)
                                               3,     // anti-windup range for the integral term
                                               0.5,   // small-error exit threshold (inches) — "close enough" distance
                                               250,   // small-error timeout (ms) — must stay within that distance this long
@@ -80,9 +80,9 @@ lemlib::ControllerSettings lateral_controller(1,   // kP  — proportional gain 
 
 // ---- Angular (turning in place) PID controller settings ----
 // Same structure, but these tune how the robot rotates to a heading.
-lemlib::ControllerSettings angular_controller(1,    // kP  — turning proportional gain
+lemlib::ControllerSettings angular_controller(2,    // kP  — turning proportional gain
                                               0,    // kI  — turning integral gain (off)
-                                              1,   // kD  — turning derivative gain (damps the turn)
+                                              10,   // kD  — turning derivative gain (damps the turn)
                                               3,    // anti-windup range
                                               1,    // small-error exit threshold (degrees)
                                               200,  // small-error timeout (ms)
@@ -139,7 +139,7 @@ void auton_blue_left(){
 void autonomous() {
     // auton_red_right();   // Run the routine defined above
     chassis.setPose(0, 0, 0);                 // (all commented out — an alternate routine kept for reference)
-    chassis.moveToPoint(0, -24, 3000);
+    chassis.moveToPoint(0, 24, 3000);   // 24 inches straight ahead
 //     chassis.turnToHeading(90,2000);
 //     pros::delay(1000);
 //     chassis.moveToPoint(20,36,3000);
@@ -156,7 +156,7 @@ void opcontrol() {
         // Read the right stick's horizontal axis (-127 to 127) → turning amount
         int rightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
 
-        chassis.arcade(-leftY, rightX);   // Drive the robot with the sticks)
+        chassis.arcade(leftY, rightX);   // Drive the robot with the sticks)
 
         // Ratchet claw: A toggles continuous spin on/off, B opens while held
         if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)) {
