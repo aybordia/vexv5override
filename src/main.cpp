@@ -14,11 +14,11 @@
 //R2 and L1 are to raise and lower the 2 bar
 //A toggles the ratchet claw spin on/off; B opens it
 //Y for flip the claw
-pros::MotorGroup dr4b_motors{1,-2};
-pros::MotorGroup left_motors({2, -7}, pros::MotorGears::blue);   // physical LEFT side; positive = forward
+// pros::MotorGroup dr4b_motors{1,-2};   // DISABLED: port 2 is a drive motor
+pros::MotorGroup left_motors({8, -4}, pros::MotorGears::blue);   // physical LEFT side; positive = forward
 
 // Right side of the drivetrain.
-pros::MotorGroup right_motors({-8, 4}, pros::MotorGears::blue);  // physical RIGHT side; positive = forward
+pros::MotorGroup right_motors({-2, 7}, pros::MotorGears::blue);  // physical RIGHT side; positive = forward
 
 
 // Inertial sensor (IMU / gyro) on smart port 6. Used to track the robot's heading (rotation).
@@ -31,11 +31,11 @@ pros::Motor ratchet_motor(5, pros::MotorGears::blue);
 
 // 2-bar lift: two motors. PLACEHOLDER PORTS (2 and 3) — change to the real ports.
 // Port 3 is negative (reversed) assuming the motors face each other; flip the sign if it fights the other one.
-pros::MotorGroup two_bar({2, -3}, pros::MotorGears::green);
+// pros::MotorGroup two_bar({2, -3}, pros::MotorGears::green);   // DISABLED: port 2 is a drive motor
 
 // Claw: the 5.5W half motor on port 7 opens and closes it.
 // The claw must be CLOSED when the program starts — that spot counts as 0 degrees.
-pros::Motor claw_motor(7, pros::MotorGears::green);
+// pros::Motor claw_motor(7, pros::MotorGears::green);   // DISABLED: port 7 is a drive motor
 const double CLAW_OPEN_DEG = -450;  // how far the motor turns to open (negative = open direction). Bigger number = opens wider
 const double CLAW_CLOSED_DEG = 30;   // where the claw closes to. Bigger number = squeezes tighter (0 = where it started)
 
@@ -106,9 +106,10 @@ void initialize() {
     // HOLD = lifts lock in place when no button is pressed instead of falling down
     lift_motor_left.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
     lift_motor_right.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
-    two_bar.set_brake_mode_all(pros::E_MOTOR_BRAKE_HOLD);
-    claw_motor.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);   // HOLD keeps the claw gripping
-    claw_motor.tare_position();                   // wherever the claw starts counts as closed (0 degrees)
+    // Both drive sides MUST use the same brake mode, or the robot yaws when it stops
+    // BRAKE = wheels stop when sticks are released instead of rolling (COAST)
+    left_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_BRAKE);
+    right_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_BRAKE);
 }
 
 void disabled() {}                 // Runs when the robot is disabled by the field; empty = do nothing
@@ -154,6 +155,10 @@ void opcontrol() {
         // Read the right stick's horizontal axis (-127 to 127) → turning amount
         int rightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
 
+        // Deadband: ignore tiny stick values from joystick drift so the robot doesn't creep
+        if (std::abs(leftY) < 5) leftY = 0;
+        if (std::abs(rightX) < 5) rightX = 0;
+
         chassis.arcade(leftY, rightX);   // Drive the robot with the sticks)
 
         // Ratchet claw: A toggles continuous spin on/off, B opens while held
@@ -188,13 +193,12 @@ void opcontrol() {
 
         // A: press once to open the claw, press again to close it
         // NOTE: A is ALSO toggling the ratchet above — move this to a free button.
-        if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)) {
-            claw_open = !claw_open;
-            claw_motor.move_absolute(claw_open ? CLAW_OPEN_DEG : CLAW_CLOSED_DEG, 100);
-        }
-
-        // Shows the claw motor's angle so you can find the right CLAW_OPEN_DEG
-        pros::lcd::print(1, "Claw: %s  %.0f deg", claw_open ? "OPEN" : "CLOSED", claw_motor.get_position());
+        // Claw disabled: claw_motor was on port 7, which is a drive motor
+        // if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)) {
+        //     claw_open = !claw_open;
+        //     claw_motor.move_absolute(claw_open ? CLAW_OPEN_DEG : CLAW_CLOSED_DEG, 100);
+        // }
+        // pros::lcd::print(1, "Claw: %s  %.0f deg", claw_open ? "OPEN" : "CLOSED", claw_motor.get_position());
 
         // Y: flip the claw over, press again to flip it back
         if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_Y)) claw_flip_piston.toggle();
