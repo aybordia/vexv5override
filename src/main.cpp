@@ -14,28 +14,21 @@
 //R2 and L1 are to raise and lower the 2 bar
 //A toggles the ratchet claw spin on/off; B opens it
 //Y for flip the claw
-// pros::MotorGroup dr4b_motors{1,-2};   // DISABLED: port 2 is a drive motor
-pros::MotorGroup left_motors({2, -7}, pros::MotorGears::blue);   // physical LEFT side; positive = forward
+// Drive motors.  Left:  front=15, back=10   Right: front=20, back=19
+// Direction signs follow Ajay's working convention (one motor per side negated);
+// flip a sign if a side spins backward.
+pros::MotorGroup left_motors ({15, -10}, pros::MotorGears::blue);   // {front, back}, positive = forward
+pros::MotorGroup right_motors({-20, 19}, pros::MotorGears::blue);   // {front, back}, positive = forward
 
-// Right side of the drivetrain.
-pros::MotorGroup right_motors({-8, 4}, pros::MotorGears::blue);  // physical RIGHT side; positive = forward
+// Inertial sensor (IMU / gyro).  Was on port 10; moved to 11 because 10 is now a drive motor.
+pros::Imu imu(11);
 
+// Lift motors (red cartridges).  Left=18, Right=2 (port negated so the two motors don't fight each other).
+pros::Motor lift_motor_left (18, pros::MotorGears::red);
+pros::Motor lift_motor_right(-2, pros::MotorGears::red);
 
-// Inertial sensor (IMU / gyro) on smart port 6. Used to track the robot's heading (rotation).
-pros::Imu imu(10);
-
-// Keep lift motors on por  ts that do not conflict with the IMU smart port.
-pros::Motor lift_motor_left(20, pros::MotorGears::red);
-pros::Motor lift_motor_right(11, pros::MotorGears::red);
-pros::Motor ratchet_motor(5, pros::MotorGears::blue);
-
-// 2-bar lift: two motors. PLACEHOLDER PORTS (2 and 3) — change to the real ports.
-// Port 3 is negative (reversed) assuming the motors face each other; flip the sign if it fights the other one.
-// pros::MotorGroup two_bar({2, -3}, pros::MotorGears::green);   // DISABLED: port 2 is a drive motor
-
-// Claw: the 5.5W half motor on port 7 opens and closes it.
-// The claw must be CLOSED when the program starts — that spot counts as 0 degrees.
-// pros::Motor claw_motor(7, pros::MotorGears::green);   // DISABLED: port 7 is a drive motor
+// Ratcheting claw motor on port 1.
+pros::Motor ratchet_motor(1, pros::MotorGears::blue);
 const double CLAW_OPEN_DEG = -450;  // how far the motor turns to open (negative = open direction). Bigger number = opens wider
 const double CLAW_CLOSED_DEG = 30;   // where the claw closes to. Bigger number = squeezes tighter (0 = where it started)
 
@@ -68,13 +61,13 @@ lemlib::OdomSensors sensors(&left_tracking,   // vertical tracking wheel 1 (left
 // ---- Lateral (forward/backward driving) PID controller settings ----
 // These numbers tune how the robot accelerates toward and settles at a target distance.
 lemlib::ControllerSettings lateral_controller(50,    // kP
-                                              0,     // kI
-                                              40,    // kD
-                                              3,     // anti-windup
-                                              1,     // small-error exit threshold (inches)
-                                              100,   // small-error timeout (ms)
-                                              3,     // large-error exit threshold (inches)
-                                              500,   // large-error timeout (ms)
+                                              12,    // kI  — bigger integral so it grinds through friction on the last inch
+                                              15,    // kD  — halved so the PID stops slamming on the brakes near target
+                                              3,     // anti-windup (integral starts accumulating within 3")
+                                              0.5,   // small-error exit threshold (inches)
+                                              200,   // small-error timeout (ms)
+                                              1,     // large-error exit threshold (inches)
+                                              300,   // large-error timeout (ms)
                                               8      // max acceleration (slew)
 );
 
@@ -106,23 +99,16 @@ void initialize() {
     // HOLD = lifts lock in place when no button is pressed instead of falling down
     lift_motor_left.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
     lift_motor_right.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
-    // Both drive sides MUST use the same brake mode, or the robot yaws when it stops
-    // BRAKE = wheels stop when sticks are released instead of rolling (COAST)
-    left_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_BRAKE);
-    right_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_BRAKE);
+    // Both drive sides MUST use the same brake mode, or the robot yaws when it stops.
+    // COAST = wheels glide to a stop instead of actively clamping; softer end-of-motion feel.
+    left_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_COAST);
+    right_motors.set_brake_mode_all(pros::E_MOTOR_BRAKE_COAST);
 }
 
-void disabled() {}                 // Runs when the robot is disabled by the field; empty = do nothing
-void competition_initialize() {}   // Runs during comp setup (e.g. auton selector); empty = nothing here
+void disabled() {}
+void competition_initialize() {}
 
 
-// ---- A specific autonomous routine: "red alliance, right-side starting position" ----
-void auton_red_right(){
-    // chassis.setPose(0,0,0);                              // Declare current position as origin: x=0, y=0, heading=0
-    // chassis.moveToPoint(-14,24,1000);                    // Drive to field point (x=-14, y=24), giving it up to 1000 ms
-    // chassis.turnToPoint(chassis.getPose().x,24,2000);    // Turn to face the point directly ahead in Y (same x, y=24), 2000 ms max
-    // chassis.moveToPoint(chassis.getPose().x,0,500, {.forwards = false});  // (disabled) would back straight up to y=0 in 500 ms
-}
 void auton_blue_left(){
     chassis.tank(80, 80, true);
     pros::c::delay(350);
@@ -136,21 +122,10 @@ void auton_blue_left(){
 
 
 }
-// ---- autonomous(): the 15-second auton period; the field calls this automatically ----
 void autonomous() {
     chassis.setPose(0, 0, 0);
-    chassis.moveToPoint(0,  6, 1000);
-    chassis.moveToPoint(0,  0, 1000, {.forwards = false});
-    chassis.moveToPoint(0,  6, 1000);
-    chassis.moveToPoint(0,  0, 1000, {.forwards = false});
-    chassis.moveToPoint(0,  23, 1000);
-    pros::delay(1000);
-    chassis.turnToPoint(24, chassis.getPose().y, 1000);
+    chassis.moveToPoint(0, 24, 3000);   // 24" ahead; 3 s timeout so the PID has time to reach the target
 }
-
-// ---- Motor test: spins each drive port forward one at a time so you can see which wheel it is ----
-// Press X in driver control to run it. Watch the brain screen and write down for each port:
-// which wheel moves (front-left, back-right...) and whether it spins FORWARD or BACKWARD.
 void drive_port_test() {
     const int ports[] = {2, 4, 7, 8};
     for (int port : ports) {
@@ -170,7 +145,6 @@ void drive_port_test() {
 void opcontrol() {
     pros::lcd::print(5, "build: drive-fix-2");   // proves this exact code is on the robot
     while (true) {   // Keep running for the whole driver period
-        if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X)) drive_port_test();
 
         // Read the left stick's vertical axis (-127 to 127) → forward/back speed
         int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
@@ -197,6 +171,8 @@ void opcontrol() {
             ratchet_motor.brake();                  // toggled off = stop
         }
 
+        // Lift: direction flip is already baked in at the motor declaration (lift_motor_right uses port -2),
+        // so both sides take the SAME sign here.
         if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
             lift_motor_left.move(90);
             lift_motor_right.move(90);
