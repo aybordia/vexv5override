@@ -67,28 +67,28 @@ lemlib::OdomSensors sensors(&left_tracking,   // vertical tracking wheel 1 (left
 
 // ---- Lateral (forward/backward driving) PID controller settings ----
 // These numbers tune how the robot accelerates toward and settles at a target distance.
-lemlib::ControllerSettings lateral_controller(2.5,   // kP  — proportional gain (how hard it pushes toward target)
-                                              0,     // kI  — integral gain (corrects long-term drift); 0 = off
-                                              7,     // kD  — derivative gain (dampens/slows approach to reduce overshoot)
-                                              3,     // anti-windup range for the integral term
-                                              0.5,   // small-error exit threshold (inches) — "close enough" distance
-                                              250,   // small-error timeout (ms) — must stay within that distance this long
-                                              2.0,   // large-error exit threshold (inches)
-                                              600,   // large-error timeout (ms)
-                                              10     // max acceleration (slew rate limit) to prevent wheel slip
+lemlib::ControllerSettings lateral_controller(50,    // kP
+                                              0,     // kI
+                                              40,    // kD
+                                              3,     // anti-windup
+                                              1,     // small-error exit threshold (inches)
+                                              100,   // small-error timeout (ms)
+                                              3,     // large-error exit threshold (inches)
+                                              500,   // large-error timeout (ms)
+                                              8      // max acceleration (slew)
 );
 
 // ---- Angular (turning in place) PID controller settings ----
 // Same structure, but these tune how the robot rotates to a heading.
-lemlib::ControllerSettings angular_controller(2,    // kP  — turning proportional gain
-                                              0,    // kI  — turning integral gain (off)
-                                              10,   // kD  — turning derivative gain (damps the turn)
-                                              3,    // anti-windup range
+lemlib::ControllerSettings angular_controller(14,   // kP
+                                              0,    // kI
+                                              17,   // kD
+                                              3,    // anti-windup
                                               1,    // small-error exit threshold (degrees)
-                                              200,  // small-error timeout (ms)
-                                              2.0,  // large-error exit threshold (degrees)
-                                              600,  // large-error timeout (ms)
-                                              0     // max acceleration (0 = no slew limit on turns)
+                                              100,  // small-error timeout (ms)
+                                              3,    // large-error exit threshold (degrees)
+                                              500,  // large-error timeout (ms)
+                                              0     // no slew on turns
 );
 
 // Assemble everything into the main Chassis object. This is what you call move/turn commands on.
@@ -137,14 +137,12 @@ void auton_blue_left(){
 }
 // ---- autonomous(): the 15-second auton period; the field calls this automatically ----
 void autonomous() {
-    // auton_red_right();   // Run the routine defined above
-    chassis.setPose(0, 0, 0);                 // (all commented out — an alternate routine kept for reference)
-    chassis.moveToPoint(0, 24, 3000);   // 24 inches straight ahead
-//     chassis.turnToHeading(90,2000);
-//     pros::delay(1000);
-//     chassis.moveToPoint(20,36,3000);
-    // auton_blue_left();
-
+    // forward / back / forward / back
+    chassis.setPose(0, 0, 0);
+    chassis.moveToPoint(0,  4, 1000);
+    chassis.moveToPoint(0,  0, 1000, {.forwards = false});
+    chassis.moveToPoint(0,  4, 1000);
+    chassis.moveToPoint(0,  0, 1000, {.forwards = false});
 }
 
 // ---- opcontrol(): the driver-control period; a loop that reads the controller forever ----
