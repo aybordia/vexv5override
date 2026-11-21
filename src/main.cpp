@@ -15,10 +15,10 @@
 //A toggles the ratchet claw spin on/off; B opens it
 //Y for flip the claw
 // pros::MotorGroup dr4b_motors{1,-2};   // DISABLED: port 2 is a drive motor
-pros::MotorGroup left_motors({8, -4}, pros::MotorGears::blue);   // physical LEFT side; positive = forward
+pros::MotorGroup left_motors({2, -7}, pros::MotorGears::blue);   // physical LEFT side; positive = forward
 
 // Right side of the drivetrain.
-pros::MotorGroup right_motors({-2, 7}, pros::MotorGears::blue);  // physical RIGHT side; positive = forward
+pros::MotorGroup right_motors({-8, 4}, pros::MotorGears::blue);  // physical RIGHT side; positive = forward
 
 
 // Inertial sensor (IMU / gyro) on smart port 6. Used to track the robot's heading (rotation).
