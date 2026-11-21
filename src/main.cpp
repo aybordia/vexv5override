@@ -138,17 +138,40 @@ void auton_blue_left(){
 }
 // ---- autonomous(): the 15-second auton period; the field calls this automatically ----
 void autonomous() {
-    // forward / back / forward / back
     chassis.setPose(0, 0, 0);
-    chassis.moveToPoint(0,  4, 1000);
+    chassis.moveToPoint(0,  6, 1000);
     chassis.moveToPoint(0,  0, 1000, {.forwards = false});
-    chassis.moveToPoint(0,  4, 1000);
+    chassis.moveToPoint(0,  6, 1000);
     chassis.moveToPoint(0,  0, 1000, {.forwards = false});
+    chassis.moveToPoint(0,  23, 1000);
+    pros::delay(1000);
+    chassis.turnToPoint(24, chassis.getPose().y, 1000);
+}
+
+// ---- Motor test: spins each drive port forward one at a time so you can see which wheel it is ----
+// Press X in driver control to run it. Watch the brain screen and write down for each port:
+// which wheel moves (front-left, back-right...) and whether it spins FORWARD or BACKWARD.
+void drive_port_test() {
+    const int ports[] = {2, 4, 7, 8};
+    for (int port : ports) {
+        pros::Motor m(port);
+        pros::lcd::print(4, "TEST: port %d spinning +   ", port);
+        controller.print(0, 0, "Port %d +      ", port);
+        m.move(50);
+        pros::delay(1500);
+        m.move(0);
+        pros::delay(1000);
+    }
+    pros::lcd::print(4, "TEST done                ");
+    controller.print(0, 0, "Test done      ");
 }
 
 // ---- opcontrol(): the driver-control period; a loop that reads the controller forever ----
 void opcontrol() {
+    pros::lcd::print(5, "build: drive-fix-2");   // proves this exact code is on the robot
     while (true) {   // Keep running for the whole driver period
+        if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X)) drive_port_test();
+
         // Read the left stick's vertical axis (-127 to 127) → forward/back speed
         int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
 
