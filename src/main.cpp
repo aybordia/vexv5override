@@ -18,17 +18,16 @@
 // Direction signs follow Ajay's working convention (one motor per side negated);
 // flip a sign if a side spins backward.
 pros::MotorGroup left_motors ({15, -10}, pros::MotorGears::blue);   // {front, back}, positive = forward
-pros::MotorGroup right_motors({-20, 19}, pros::MotorGears::blue);   // {front, back}, positive = forward
+pros::MotorGroup right_motors({-20, 13}, pros::MotorGears::blue);   // {front, back}, positive = forward
 
 // Inertial sensor (IMU / gyro).  Was on port 10; moved to 11 because 10 is now a drive motor.
 pros::Imu imu(11);
-
 // Lift motors (red cartridges).  Left=18, Right=2 (port negated so the two motors don't fight each other).
 pros::Motor lift_motor_left (18, pros::MotorGears::red);
 pros::Motor lift_motor_right(-2, pros::MotorGears::red);
 
 // Ratcheting claw motor on port 1.
-pros::Motor ratchet_motor(1, pros::MotorGears::blue);
+pros::Motor ratchet_motor(18, pros::MotorGears::blue);
 const double CLAW_OPEN_DEG = -450;  // how far the motor turns to open (negative = open direction). Bigger number = opens wider
 const double CLAW_CLOSED_DEG = 30;   // where the claw closes to. Bigger number = squeezes tighter (0 = where it started)
 
@@ -54,9 +53,17 @@ lemlib::TrackingWheel left_tracking(&left_motors, lemlib::Omniwheel::OLD_325, -1
 // Right tracking: same idea, offset +6.25" (right side of center).
 lemlib::TrackingWheel right_tracking(&right_motors, lemlib::Omniwheel::OLD_325, 12.5 / 2, ODOM_RPM);
 
+// Vertical tracking wheel: V5 Rotation sensor on port 16.
+// CHECK THESE 3 on the robot:
+//  - wheel size: NEW_2 = 2" omni. Use NEW_275 for 2.75", OLD_325/NEW_325 for 3.25".
+//  - offset (inches): how far the wheel is LEFT (-) or RIGHT (+) of the robot's center line. 0 = centered.
+//  - reversed: if y goes DOWN when the robot drives forward, change 16 to -16.
+pros::Rotation vertical_encoder(16);
+lemlib::TrackingWheel vertical_tracking(&vertical_encoder, lemlib::Omniwheel::NEW_2, 0);
+
 // Bundle the sensors LemLib uses to figure out where the robot is on the field.
-lemlib::OdomSensors sensors(&left_tracking,   // vertical tracking wheel 1 (left)
-                            &right_tracking,  // vertical tracking wheel 2 (right)
+lemlib::OdomSensors sensors(&vertical_tracking, // vertical tracking wheel 1 (rotation sensor, port 16)
+                            nullptr,          // vertical tracking wheel 2 — none (IMU gives heading)
                             nullptr,          // horizontal tracking wheel 1 — none installed
                             nullptr,          // horizontal tracking wheel 2 — none installed
                             &imu);            // the inertial sensor for heading
@@ -145,7 +152,31 @@ const bool RUN_TURN_TEST = true;   // true = run angular_test() in auton; false 
 
 void autonomous() {
     chassis.setPose(0, 0, 0);   // reset odometry to origin (0,0) facing forward (0 deg)
-    chassis.turnToHeading(90, 2000);   // turn to 90 deg heading, 2 sec timeout
+    chassis.moveToPoint(0,-13,1000, {.forwards = false, .maxSpeed = 60});   // backward (slower)
+    chassis.moveToPoint(0,0,1000, {.maxSpeed = 60});                        // forward (slower)
+    chassis.moveToPoint(0,-13,1000, {.forwards = false, .maxSpeed = 60});   // backward (slower)
+    chassis.moveToPoint(0,10,1000);   
+    chassis.turnToHeading(90, 1000);                     // forward
+    chassis.turnToHeading(90, 1000);
+    chassis.waitUntilDone();   // wait for the turn to finish so getPose().y is the real final y
+    chassis.moveToPoint(20,chassis.getPose().y,1000);
+    chassis.waitUntilDone();   // keep auton alive until the last move finishes                      // forward
+    chassis.moveToPoint(4,chassis.getPose().y,1000, {.forwards = false});
+    chassis.turnToHeading(45, 1000);
+    chassis.waitUntilDone();
+    chassis.moveToPoint(22, 34, 1000);
+    chassis.waitUntilDone();
+    chassis.turnToHeading(135,1000);
+    chassis.waitUntilDone();
+    pros::delay(250);
+    chassis.moveToPoint(48,24,1000);
+    chassis.waitUntilDone();
+    chassis.turnToHeading(90,1000);
+    chassis.waitUntilDone();
+    chassis.moveToPoint(62.41, chassis.getPose().y, 1000);
+    chassis.waitUntilDone();
+    chassis.turnToHeading(180,1000);
+    chassis.waitUntilDone();
 }
 void drive_port_test() {
     const int ports[] = {2, 4, 7, 8};
