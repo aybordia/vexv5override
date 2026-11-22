@@ -43,13 +43,16 @@ pros::adi::Pneumatics claw_flip_piston('H', false);
 // ---- Drivetrain geometry: tells LemLib the physical dimensions so it can convert math into motor commands ----
 // Args: left group, right group, track width (12.5" = distance between left & right wheels),
 //       wheel type (old 3.25" omni), drive RPM (480), horizontal drift factor (2 = how much the robot slides).
-lemlib::Drivetrain drivetrain(&left_motors, &right_motors, 12.5, lemlib::Omniwheel::OLD_325, 480, 2);
+lemlib::Drivetrain drivetrain(&left_motors, &right_motors, 12.5, lemlib::Omniwheel::OLD_325, 360, 2);
 
 // Tracking wheels for odometry (position tracking). Here the DRIVE MOTORS double as tracking wheels.
 // Left tracking: uses left_motors, 3.25" wheel, offset -6.25" from center (half of track width, left side), 480 RPM.
-lemlib::TrackingWheel left_tracking(&left_motors, lemlib::Omniwheel::OLD_325, -12.5 / 2, 480);
+// ODOM_RPM: tune this if auton drives short/long. Odom thought it went 24" but the robot only went ~19",
+// so encoders were over-counting by 24/19 -> scale 480 down to 380. Rule: new = old * (actual / target).
+const float ODOM_RPM = 360;   // blue 600rpm motor on 36T -> 60T wheel gear = 600*36/60
+lemlib::TrackingWheel left_tracking(&left_motors, lemlib::Omniwheel::OLD_325, -12.5 / 2, ODOM_RPM);
 // Right tracking: same idea, offset +6.25" (right side of center).
-lemlib::TrackingWheel right_tracking(&right_motors, lemlib::Omniwheel::OLD_325, 12.5 / 2, 480);
+lemlib::TrackingWheel right_tracking(&right_motors, lemlib::Omniwheel::OLD_325, 12.5 / 2, ODOM_RPM);
 
 // Bundle the sensors LemLib uses to figure out where the robot is on the field.
 lemlib::OdomSensors sensors(&left_tracking,   // vertical tracking wheel 1 (left)
@@ -60,22 +63,22 @@ lemlib::OdomSensors sensors(&left_tracking,   // vertical tracking wheel 1 (left
 
 // ---- Lateral (forward/backward driving) PID controller settings ----
 // These numbers tune how the robot accelerates toward and settles at a target distance.
-lemlib::ControllerSettings lateral_controller(50,    // kP
-                                              12,    // kI  — bigger integral so it grinds through friction on the last inch
-                                              15,    // kD  — halved so the PID stops slamming on the brakes near target
+lemlib::ControllerSettings lateral_controller(12,    // kP  — was 50: robot stayed at full speed until ~2" out, then slammed. 12 starts slowing ~10" out
+                                              0,    // kI  — off; integral was winding up and jerking at the end
+                                              6,     // kD  — light damping so it eases in instead of stopping hard
                                               3,     // anti-windup (integral starts accumulating within 3")
                                               0.5,   // small-error exit threshold (inches)
                                               200,   // small-error timeout (ms)
                                               1,     // large-error exit threshold (inches)
-                                              300,   // large-error timeout (ms)
+                                              300,   //] large-error timeout (ms)
                                               8      // max acceleration (slew)
 );
 
 // ---- Angular (turning in place) PID controller settings ----
 // Same structure, but these tune how the robot rotates to a heading.
-lemlib::ControllerSettings angular_controller(14,   // kP
+lemlib::ControllerSettings angular_controller(5.127, // kP
                                               0,    // kI
-                                              17,   // kD
+                                              39,   // kD  — was 39.812; bumped to stop the small overshoot
                                               3,    // anti-windup
                                               1,    // small-error exit threshold (degrees)
                                               100,  // small-error timeout (ms)
@@ -122,9 +125,27 @@ void auton_blue_left(){
 
 
 }
-void autonomous() {
+// Turn test: 90 right, back to 0, then 180. Prints final heading so you can see over/undershoot.
+void angular_test() {
     chassis.setPose(0, 0, 0);
-    chassis.moveToPoint(0, 24, 3000);   // 24" ahead; 3 s timeout so the PID has time to reach the target
+    chassis.turnToHeading(90, 2000);
+    chassis.waitUntilDone();
+    pros::lcd::print(3, "after 90:  %.1f deg", chassis.getPose().theta);
+    pros::delay(1000);
+    chassis.turnToHeading(0, 2000);
+    chassis.waitUntilDone();
+    pros::lcd::print(4, "after 0:   %.1f deg", chassis.getPose().theta);
+    pros::delay(1000);
+    chassis.turnToHeading(180, 2000);
+    chassis.waitUntilDone();
+    pros::lcd::print(5, "after 180: %.1f deg", chassis.getPose().theta);
+}
+
+const bool RUN_TURN_TEST = true;   // true = run angular_test() in auton; false = normal 24" drive
+
+void autonomous() {
+    chassis.setPose(0, 0, 0);   // reset odometry to origin (0,0) facing forward (0 deg)
+    chassis.turnToHeading(90, 2000);   // turn to 90 deg heading, 2 sec timeout
 }
 void drive_port_test() {
     const int ports[] = {2, 4, 7, 8};
